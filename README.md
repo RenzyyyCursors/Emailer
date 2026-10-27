@@ -28,7 +28,7 @@ npm run build  # Syntax, static asset, UI binding, and API import checks
 ## How verification works
 
 1. Parse addresses separated by newlines, commas, semicolons, or whitespace. Validate supported syntax, preserve local-part case, and normalize international domain names.
-2. Query Cloudflare DNS over HTTPS at `https://1.1.1.1/dns-query` for MX records. A single Null MX (`0 .`) explicitly declares no mail service.
+2. Query MX records with bounded native DNS using Cloudflare (`1.1.1.1`) and Google Public DNS (`8.8.8.8`) as a secondary resolver. If regular DNS fails temporarily, try Cloudflare DNS over HTTPS. This avoids relying on one network path. A single Null MX (`0 .`) explicitly declares no mail service.
 3. Resolve mail-server A/AAAA records. When no MX exists, check the domain's A/AAAA address for SMTP's implicit-MX fallback.
 4. Return a reason, evidence code, MX records, and separate syntax/domain/routing/mailbox signals. Temporary DNS errors and timeouts stay unknown. Repeated lookups are cached within a batch; concurrency, input size, and query/batch time are bounded.
 
@@ -85,7 +85,7 @@ The adapter uses `EHLO`/`HELO`, an empty return path, and `RCPT TO`, then closes
 
 ## Privacy and limits
 
-The application does not persist address lists, use analytics, or intentionally log request bodies. The API receives the list; only domain/mail-server names go to Cloudflare DNS. Hosting/resolver providers may retain their own infrastructure logs. Reloading clears browser results; clearing the input keeps the previous results until another check or reload.
+The application does not persist address lists, use analytics, or intentionally log request bodies. The API receives the list; only domain/mail-server names go to Cloudflare or Google Public DNS. The HTTPS fallback uses Cloudflare. Hosting/resolver providers may retain their own infrastructure logs. Reloading clears browser results; clearing the input keeps the previous results until another check or reload.
 
 Results are rendered as text and CSV cells are escaped against formula injection. Rate limiting is best effort per process/function instance; clients behind a proxy can share a quota. It is not a distributed production abuse-control system.
 

@@ -323,7 +323,7 @@ function openInfo(privacy = false) {
   const paragraphs = privacy
     ? [
         "Your full list is sent to this app’s server over the same-origin API. The application does not save addresses, use analytics, or keep a history in your browser.",
-        "Only domain names and mail-server hostnames are queried through Cloudflare DNS over HTTPS. The local part of an address is not included in DNS requests. Cloudflare and your hosting provider apply their own infrastructure policies.",
+        "Only domain names and mail-server hostnames are queried through Cloudflare or Google Public DNS, with a Cloudflare HTTPS fallback. The local part of an address is not included in DNS requests. The DNS providers and your hosting provider apply their own infrastructure policies.",
         "In optional local SMTP mode, only exact addresses declared as owned by the operator can be checked with a mail server. No message or DATA command is sent. Exported CSV files are saved on your device.",
       ]
     : [

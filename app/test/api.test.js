@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { Resolver } from 'node:dns/promises';
 import { createApiHandler, MAX_ADDRESSES, MAX_BODY_BYTES, securityHeaders } from '../src/api.js';
 import vercelHandler from '../src/vercel.js';
 
@@ -288,10 +289,13 @@ test('Vercel route entrypoints all export the shared handler', async () => {
   }
 });
 
-test('Vercel remains DNS-only when local SMTP environment variables are present', async () => {
+test('Vercel remains DNS-only when local SMTP environment variables are present', async (t) => {
   const previousOwned = process.env.SMTP_OWNED_EMAILS;
   const previousFetch = globalThis.fetch;
   let dnsCalls = 0;
+  t.mock.method(Resolver.prototype, 'resolveMx', async () => { dnsCalls += 1; return [{ priority: 10, exchange: 'mx.routing.test' }]; });
+  t.mock.method(Resolver.prototype, 'resolve4', async () => { dnsCalls += 1; return ['192.0.2.10']; });
+  t.mock.method(Resolver.prototype, 'resolve6', async () => []);
   process.env.SMTP_OWNED_EMAILS = 'owned@routing.test';
   globalThis.fetch = async (url) => {
     const query = new URL(url);

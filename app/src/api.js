@@ -1,4 +1,5 @@
-import { checkBatch, createDnsResolver, parseInput } from "./checker.js";
+import { checkBatch, parseInput } from "./checker.js";
+import { createNodeDnsResolver } from './dns.js';
 
 export const MAX_ADDRESSES = 50;
 export const MAX_BODY_BYTES = 20_000;
@@ -243,7 +244,7 @@ export function createApiHandler({
     };
     const resolver =
       resolveDns ||
-      createDnsResolver({ timeoutMs: 2500, signal: controller.signal });
+      createNodeDnsResolver({ signal: controller.signal });
     try {
       const results = await checkBatch(addresses, {
         resolveDns: (...args) =>

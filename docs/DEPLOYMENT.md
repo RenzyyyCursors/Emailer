@@ -155,7 +155,7 @@ npm run submission -- --live YOUR_LIVE_HTTPS_URL --repo https://github.com/Renzy
 | Vercel frontend works, `/api/health` returns 404 | Root must be `./`; confirm `api/` and `app/src/` were pushed alongside `public/`. |
 | Service displays a hosting login page | Use the production domain and check deployment protection/public access. |
 | Render first load is slow | Wait for the Free instance to wake, then rerun verification. |
-| Every syntactically valid address has `dns_unavailable` | DNS HTTPS requests are failing or timing out. Check logs/connectivity; unknown does not mean the mailbox bounced. |
+| Every syntactically valid address has `dns_unavailable` | Both native DNS and the HTTPS fallback are failing or timing out. Check logs/connectivity; unknown does not mean the mailbox bounced. |
 | Valid Gmail/Outlook addresses show unknown | Expected: healthy DNS cannot confirm a mailbox. |
 | “10 checks in one minute” | Wait a minute. Quotas are best effort per instance; clients behind a proxy may share one. |
 | Old behavior after a code change | Commit **and Push origin**, wait for the newest deployment to finish, and reload the browser. |

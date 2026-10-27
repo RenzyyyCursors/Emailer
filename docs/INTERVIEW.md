@@ -17,7 +17,7 @@ Understand and run the project yourself before presenting it. Describe the parts
 | Three outcomes with evidence | Avoid false confidence when servers hide mailbox existence. | Many valid addresses return unknown. |
 | Shared checking engine | The local server and Vercel API use the same classification rules. | Runtime-specific HTTP and SMTP adapters still need separate handling. |
 | No runtime dependencies | A small project is easy to inspect, run, and deploy. | Parsing and protocol code must be scoped carefully and tested. |
-| DNS over HTTPS | Works over standard HTTPS in serverless hosting. | Relies on a third-party resolver; lookup failures must be handled explicitly. |
+| Native DNS with HTTPS fallback | Avoids a single DNS transport failure. | Relies on a third-party resolver; lookup failures must be handled explicitly. |
 | Per-batch caching and bounded concurrency | Duplicate domains avoid repeated work and requests do not create unlimited DNS queries. | This is not a shared cache across deployments. |
 | Exact owned-address SMTP allowlist | Prevent arbitrary mailbox probing through the local server. | The operator must configure and maintain the allowlist. |
 | Deterministic network fixtures | Tests are fast, reproducible, and never email anyone. | Fixtures cannot demonstrate a particular provider's live policy. |
@@ -58,7 +58,7 @@ No. It validates a documented practical subset. Plausible quoted local parts, SM
 
 **What does “no persistence” mean?**
 
-The application does not write address lists to a database or file and does not intentionally log them. The server receives the list to process it; domain names go to Cloudflare. Hosting infrastructure may keep its own logs, so “nothing ever leaves the browser” would be inaccurate.
+The application does not write address lists to a database or file and does not intentionally log them. The server receives the list to process it; domain names go to Cloudflare or Google Public DNS. Hosting infrastructure may keep its own logs, so “nothing ever leaves the browser” would be inaccurate.
 
 **What would you change for production?**
 
