@@ -4,7 +4,7 @@ Email verification for the Shieldnix software development internship assignment.
 
 **Repository:** [RenzyyyCursors/Emailer](https://github.com/RenzyyyCursors/Emailer)
 
-**Live application:** Add your public Render or Vercel URL here after deployment.
+**Live application:** [Add your public Render or Vercel URL here after deployment.](https://emailer-2t73.onrender.com/)
 
 ![MailSignal interface](docs/screenshot.png)
 
@@ -88,16 +88,6 @@ The adapter uses `EHLO`/`HELO`, an empty return path, and `RCPT TO`, then closes
 The application does not persist address lists, use analytics, or intentionally log request bodies. The API receives the list; only domain/mail-server names go to Cloudflare or Google Public DNS. The HTTPS fallback uses Cloudflare. Hosting/resolver providers may retain their own infrastructure logs. Reloading clears browser results; clearing the input keeps the previous results until another check or reload.
 
 Results are rendered as text and CSV cells are escaped against formula injection. Rate limiting is best effort per process/function instance; clients behind a proxy can share a quota. It is not a distributed production abuse-control system.
-
-## Submission
-
-After deploying, add the real live link above and generate the required submission document:
-
-```bash
-npm run submission -- --live https://YOUR-SERVICE.onrender.com --repo https://github.com/RenzyyyCursors/Emailer
-```
-
-Open `submission.html` in a browser and use **Print → Save as PDF**. It contains the live and GitHub links required by the assignment. A [starter PDF](output/pdf/mailsignal-submission-template.pdf) is marked pending; replace it before submitting. An optional direct-PDF utility is available with `python3 -m pip install reportlab`, then `python3 scripts/create_submission_pdf.py --live YOUR_LIVE_HTTPS_URL`. Python is not needed by the app. Read the [interview guide](docs/INTERVIEW.md) before presenting.
 
 ## Structure
 
