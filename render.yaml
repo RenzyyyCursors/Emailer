@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: mailsignal
+    runtime: node
+    plan: free
+    buildCommand: npm run build && npm test
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit

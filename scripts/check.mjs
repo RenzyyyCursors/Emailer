@@ -29,6 +29,8 @@ for (const file of await sourceFiles(root)) {
 }
 const config = JSON.parse(await readFile(join(root, "vercel.json"), "utf8"));
 assert.equal(config.outputDirectory, "public");
+await access(join(root, "render.yaml"));
+await access(join(root, ".node-version"));
 for (const name of [
   "index.html",
   "styles.css",
@@ -55,5 +57,5 @@ for (const route of ["check", "health", "demo"]) {
   );
 }
 console.log(
-  "Checks passed: JavaScript syntax, UI bindings, static assets, Vercel configuration, and API imports.",
+  "Checks passed: JavaScript syntax, UI bindings, static assets, Render/Vercel configuration files, and API imports.",
 );

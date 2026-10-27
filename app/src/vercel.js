@@ -7,12 +7,24 @@ export default async function handler(req, res) {
   for (const [key, value] of Object.entries(securityHeaders))
     res.setHeader(key, value);
   try {
-    const body =
-      req.method === "GET" || req.method === "HEAD"
-        ? undefined
-        : typeof req.body === "string"
-          ? req.body
-          : JSON.stringify(req.body ?? {});
+    let body;
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      let parsedBody;
+      try {
+        // Vercel lazily parses JSON in this getter and throws for malformed JSON.
+        parsedBody = req.body;
+      } catch {
+        res.statusCode = 400;
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Cache-Control", "no-store");
+        res.end(
+          JSON.stringify({ error: "The request must contain valid JSON." }),
+        );
+        return;
+      }
+      // A string here is a parsed JSON string, not an unparsed request body.
+      body = JSON.stringify(parsedBody ?? {});
+    }
     if (body && Buffer.byteLength(body) > MAX_BODY_BYTES) {
       res.statusCode = 413;
       res.setHeader("Content-Type", "application/json");

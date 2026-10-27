@@ -4,13 +4,16 @@
   "private": true,
   "type": "module",
   "description": "Evidence-based email checks with honest uncertainty. No messages sent.",
-  "engines": { "node": ">=22.9.0" },
+  "engines": {
+    "node": ">=22.9.0 <25"
+  },
   "scripts": {
     "start": "node --env-file-if-exists=.env app/server.mjs",
     "dev": "node --watch --env-file-if-exists=.env app/server.mjs",
     "test": "node --test app/test/*.test.js",
     "check": "node scripts/check.mjs",
     "build": "node scripts/check.mjs",
-    "submission": "node scripts/submission.mjs"
+    "submission": "node scripts/submission.mjs",
+    "verify:deployment": "node scripts/verify-deployment.mjs"
   }
 }

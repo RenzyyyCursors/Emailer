@@ -343,12 +343,27 @@ test('Vercel adapter preserves method/origin guards and handles oversized or mal
   assert.equal(huge.statusCode, 413);
   assert.equal(huge.headers.get('cache-control'), 'no-store');
   const malformed = mockVercelResponse();
-  await vercelHandler(mockVercelRequest('/api/check', {
-    method: 'POST', body: '{ invalid json', headers: { 'content-type': 'application/json' },
-  }), malformed);
+  const malformedRequest = mockVercelRequest('/api/check', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+  });
+  Object.defineProperty(malformedRequest, 'body', {
+    get() { throw new SyntaxError('Private body parsing detail'); },
+  });
+  await vercelHandler(malformedRequest, malformed);
   assert.equal(malformed.statusCode, 400);
+  assert.equal(malformed.json().error, 'The request must contain valid JSON.');
+  assert.equal(malformed.headers.get('cache-control'), 'no-store');
   const brokenRequest = mockVercelResponse();
   await vercelHandler({ url: '/api/health', method: 'GET', headers: { host: 'bad host with spaces' } }, brokenRequest);
   assert.equal(brokenRequest.statusCode, 500);
   assert.equal(brokenRequest.json().error, 'The service could not process this request.');
+});
+
+test('Vercel adapter preserves parsed JSON string primitives instead of treating them as objects', async () => {
+  const response = mockVercelResponse();
+  await vercelHandler(mockVercelRequest('/api/check', {
+    method: 'POST', body: '{"text":"invalid-address"}', headers: { 'content-type': 'application/json' },
+  }), response);
+  assert.equal(response.statusCode, 400);
+  assert.equal(response.json().error, 'Provide a text field containing the addresses.');
 });

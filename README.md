@@ -1,12 +1,16 @@
 # MailSignal
 
-A small email deliverability checker built for an internship assignment. Paste up to **50 addresses**, inspect the evidence for each result, filter or search the results, and export a CSV. The interface makes uncertainty visible instead of treating a valid domain as proof that a mailbox exists.
+Email verification for the Shieldnix software development internship assignment. Paste up to **50 addresses** and see **likely delivered**, **likely bounce**, or **unknown**, with evidence for each result. Includes search, status filters, CSV export, and a clearly labelled simulated demo.
 
-**Stack:** vanilla HTML/CSS/JavaScript, Node.js 22.9+, and Vercel Functions. No runtime dependencies, database, paid API, or API keys are required.
+**Repository:** [RenzyyyCursors/Emailer](https://github.com/RenzyyyCursors/Emailer)
 
-![MailSignal interface showing actual DNS checks](docs/screenshot.png)
+**Live application:** Add your public Render or Vercel URL here after deployment.
+
+![MailSignal interface](docs/screenshot.png)
 
 ## Run locally
+
+Use Node.js 22.9+ or 24.x. Render uses the tested version in `.node-version`.
 
 ```bash
 git clone https://github.com/RenzyyyCursors/Emailer.git
@@ -14,96 +18,97 @@ cd Emailer
 npm start
 ```
 
-Open [localhost:3000](http://localhost:3000). Install Node.js 22.9 or newer first; there are no packages to install. Use `npm run dev` for automatic server restarts. Optional configuration is documented in [`.env.example`](.env.example).
+Open [127.0.0.1:3000](http://127.0.0.1:3000). The application has **no runtime dependencies, database, API keys, or required environment variables**. No `npm install` is needed. `npm run dev` restarts the server when code changes.
 
 ```bash
-npm test       # deterministic unit and API tests; no real emails are sent
-npm run check  # JavaScript syntax and required-file checks
+npm test       # Offline tests with DNS/SMTP fixtures; no messages sent
+npm run build  # Syntax, static asset, UI binding, and API import checks
 ```
 
-## What a result means
+## How verification works
 
-| Result | Evidence | Practical meaning |
+1. Parse addresses separated by newlines, commas, semicolons, or whitespace. Validate supported syntax, preserve local-part case, and normalize international domain names.
+2. Query Cloudflare DNS over HTTPS at `https://1.1.1.1/dns-query` for MX records. A single Null MX (`0 .`) explicitly declares no mail service.
+3. Resolve mail-server A/AAAA records. When no MX exists, check the domain's A/AAAA address for SMTP's implicit-MX fallback.
+4. Return a reason, evidence code, MX records, and separate syntax/domain/routing/mailbox signals. Temporary DNS errors and timeouts stay unknown. Repeated lookups are cached within a batch; concurrency, input size, and query/batch time are bounded.
+
+| Result | Evidence |
+| --- | --- |
+| **Likely delivered** | An optional **local, owned-address-only** SMTP recipient check was accepted. Acceptance is not a delivery guarantee; catch-all behavior is untested. |
+| **Likely bounce** | Invalid syntax, nonexistent domain, Null MX, no usable mail route, or a definite local SMTP `550 5.1.1` mailbox-not-found reply. |
+| **Unknown** | Healthy routing without mailbox confirmation, temporary lookup/server failure, ambiguous SMTP response, or unsupported address syntax. |
+
+The API status values are `delivered`, `bounce`, and `unknown`. Plausible quoted local parts, SMTPUTF8 local parts, and address literals are explicitly unsupported/unknown. Duplicate input rows are retained.
+
+**A working Gmail/Outlook domain does not prove a particular mailbox exists.** This is why real, well-routed addresses normally return unknown in the hosted version. The simulated demo uses fictional `.test` addresses, performs no network checks, and marks its results and CSV as simulated.
+
+## Hosting limitations - Render and Vercel
+
+**Both documented hosted versions are DNS-only.** They check syntax, domain existence, Null MX, and mail routing. They cannot confirm mailbox existence, catch-all behavior, inbox placement, spam filtering, or final delivery. Real **likely delivered** results are available only through the optional local SMTP mode; simulation is never presented as live verification.
+
+- **Render Free** [blocks outbound SMTP ports 25, 465, and 587](https://render.com/changelog/free-web-services-will-no-longer-allow-outbound-traffic-to-smtp-ports). MailSignal disables SMTP on Render, even if an ownership allowlist is set.
+- **Vercel** [blocks outbound port 25](https://vercel.com/kb/guide/serverless-functions-and-smtp), used to contact receiving mail servers. Its API adapter is always DNS-only.
+- **Render Free** [sleeps after 15 minutes of inactivity and takes about a minute to wake](https://render.com/docs/free). This delay is separate from an email check returning unknown.
+
+This follows the assignment's instruction to explain what the deployed version can and cannot check when hosting restricts mail-server connections. It never sends test messages.
+
+## Deploy
+
+See the [step-by-step GitHub, Render, and Vercel guide](docs/DEPLOYMENT.md), including verification and troubleshooting.
+
+| Setting | Render | Vercel |
 | --- | --- | --- |
-| **Likely delivered** | An optional local SMTP check accepted an allowlisted recipient. | A positive signal, never a guarantee of inbox placement or eventual delivery. Catch-all behavior is untested. |
-| **Likely to bounce** | Invalid supported syntax, NXDOMAIN, Null MX, no usable mail route, or an explicit local SMTP `550 5.1.1` rejection. | The check found a specific reason delivery is unlikely. |
-| **Unknown** | A usable domain with an unverified mailbox; temporary DNS errors; SMTP privacy/policy responses; unsupported syntax. | There is not enough evidence to make a mailbox-level claim. |
+| Type | **Web Service**, Node runtime, **Free** instance | **Other** framework |
+| Root directory | Leave blank (repository root) | `./` (repository root) |
+| Build command | `npm run build && npm test` | `npm run build` |
+| Start command | `npm start` | Managed by the `api/` functions; no start command |
+| Output directory | Not needed | `public` |
+| Health check | `/api/health` | Open `/api/health` after deployment |
+| Environment variables | None to add | None to add |
 
-The API uses status values `delivered`, `bounce`, and `unknown`. Each row includes a reason code, a readable explanation, syntax/domain/mail-route/mailbox check states, and any discovered MX records. Duplicate rows stay in the results; repeated lookups are shared within a batch.
+`render.yaml` supplies the Render Blueprint configuration. `.node-version` pins Render's Node version. The server binds to Render's `PORT` on `0.0.0.0` and handles the public HTTPS origin behind its proxy. `vercel.json` configures Vercel's static frontend and Node API functions. Do not choose `app/` or `public/` as the project root.
 
-The **simulated demo** uses reserved `.test` addresses and fixed fixtures to demonstrate all three outcomes without external DNS or SMTP calls. Its results are visibly labelled as simulated and are not mailbox verification.
-
-## How it works
-
-1. Parse addresses separated by newlines, commas, semicolons, or whitespace. Validate a supported email syntax subset; preserve local-part case and normalize the domain, including IDNA domains. Plausible quoted local parts, SMTPUTF8 local parts, and address literals return unknown rather than being silently rejected as invalid.
-2. Ask Cloudflare DNS over HTTPS (`https://1.1.1.1/dns-query`) for MX records. The HTTPS endpoint uses a fixed IP to avoid a bootstrap DNS lookup, with normal TLS certificate validation. Handle an explicit Null MX (`0 .`) as no email service. If no MX exists, check A/AAAA records for the SMTP implicit-MX fallback.
-3. Resolve advertised mail-server addresses. A temporary lookup failure remains unknown; it is never turned into NXDOMAIN or a bounce.
-4. Return the evidence. By default, a working DNS route still produces **unknown** because DNS cannot prove that an individual mailbox exists.
-
-The local server and Vercel functions share the same checking engine. DNS concurrency is bounded, individual queries have timeouts, and batch lookups are cached in memory for that request.
-
-## Vercel deployment and its limitation
-
-**The Vercel deployment is DNS-only.** Vercel [blocks outbound SMTP on port 25](https://vercel.com/kb/guide/serverless-functions-and-smtp), the port used to contact a domain's receiving mail server. MailSignal therefore disables raw SMTP in its Vercel API, including when SMTP environment variables are present. A third-party SMTP submission service on port 465/587 would send through that service; it would not prove that an arbitrary recipient mailbox exists.
-
-The deployed version can identify syntax and DNS routing problems. It **cannot confirm mailbox existence, catch-all behavior, inbox placement, spam filtering, or final delivery**. Real addresses with healthy routing normally return **unknown**. This is an intentional accuracy decision.
-
-After pushing this folder to your GitHub repository:
-
-1. Import the repository into Vercel.
-2. Choose **Other** as the framework and keep the root directory at `./`.
-3. Use Node.js 22.x or newer; `vercel.json` supplies `npm run build` and the `public` output directory.
-4. Deploy. No environment variables are needed. Check `/api/health` and run a simulated demo from the app.
-
-The root `api/` folder contains the serverless endpoints; `public/` contains the frontend. Do not set the Vercel root directory to `app/` or `public/`.
-
-## Optional local SMTP checks
-
-For a real positive mailbox signal, run locally on a network that permits outbound port 25 and configure only exact addresses **you own**:
+After deployment, run this from your local project folder with the **real live URL**:
 
 ```bash
-cp .env.example .env
-# Edit .env: set SMTP_OWNED_EMAILS and SMTP_HELO_HOST, then restart npm start.
+npm run verify:deployment -- https://YOUR-SERVICE.onrender.com
+# Or: npm run verify:deployment -- https://YOUR-PROJECT.vercel.app
 ```
 
-SMTP is disabled by default. Only allowlisted full addresses can be probed. The check uses an empty return path, sends one `RCPT TO`, and closes before `DATA`; it never sends an email message. Private/special-purpose destination IPs are blocked. Network blocks, greylisting, ambiguous rejections, or timeouts return unknown. See [the SMTP design and safety details](docs/SMTP.md).
+It checks the frontend/modules, health API, simulated demo, and live DNS classification without sending any email. Open the final public URL in a private browser window too.
 
-## Privacy and scope
+## Optional local SMTP mode
 
-- The app does not persist address lists, use analytics, or intentionally log request bodies. Reloading the page removes browser results; CSV files are downloaded only when requested. Clearing the input keeps the previous results visible until another check or reload.
-- The API receives the submitted list. Only queried domain/mail-server names go to Cloudflare DNS; the local part is not included in DNS requests. Your hosting platform can retain its own access and infrastructure logs.
-- Input and body sizes are bounded, output is rendered as text, CSV cells are escaped against formula injection, and basic security headers are configured.
-- Rate limiting is best-effort and local to each process/function instance. A production service with untrusted traffic would need a shared rate limiter and stronger abuse controls.
-- This is an evidence-based internship project, not a bulk mailing service. It does not send test messages, probe random catch-all recipients, or promise a deliverability percentage.
+Copy `.env.example` to `.env`, add only complete addresses **you own** to `SMTP_OWNED_EMAILS`, set `SMTP_HELO_HOST`, and restart `npm start`. Your network must permit outbound port 25. This mode binds only to loopback and stays disabled on Render/Vercel.
 
-## Submission and interview
+The adapter uses `EHLO`/`HELO`, an empty return path, and `RCPT TO`, then closes before `DATA`. It never sends message content or random catch-all probes. Private/special-purpose IPs are blocked, connections are pinned to a validated IP, and time/reply sizes are bounded. See [SMTP details](docs/SMTP.md).
 
-After deployment, generate a printable submission sheet with your actual links:
+## Privacy and limits
+
+The application does not persist address lists, use analytics, or intentionally log request bodies. The API receives the list; only domain/mail-server names go to Cloudflare DNS. Hosting/resolver providers may retain their own infrastructure logs. Reloading clears browser results; clearing the input keeps the previous results until another check or reload.
+
+Results are rendered as text and CSV cells are escaped against formula injection. Rate limiting is best effort per process/function instance; clients behind a proxy can share a quota. It is not a distributed production abuse-control system.
+
+## Submission
+
+After deploying, add the real live link above and generate the required submission document:
 
 ```bash
-npm run submission -- --live https://YOUR-PROJECT.vercel.app --repo https://github.com/RenzyyyCursors/Emailer
+npm run submission -- --live https://YOUR-SERVICE.onrender.com --repo https://github.com/RenzyyyCursors/Emailer
 ```
 
-Open the generated `submission.html` and use **Print → Save as PDF**. A starter PDF is also available at [`output/pdf/mailsignal-submission-template.pdf`](output/pdf/mailsignal-submission-template.pdf), with the deployment marked as pending. Replace it with the completed version before submitting. The live link must point to a real deployment; the repository does not pretend that one already exists. See [the interview guide](docs/INTERVIEW.md) for a short demo and engineering discussion points.
+Open `submission.html` in a browser and use **Print → Save as PDF**. It contains the live and GitHub links required by the assignment. A [starter PDF](output/pdf/mailsignal-submission-template.pdf) is marked pending; replace it before submitting. An optional direct-PDF utility is available with `python3 -m pip install reportlab`, then `python3 scripts/create_submission_pdf.py --live YOUR_LIVE_HTTPS_URL`. Python is not needed by the app. Read the [interview guide](docs/INTERVIEW.md) before presenting.
 
-The template PDF includes an editable field for the live link. To generate a finished PDF directly instead, install the optional document dependency with `python3 -m pip install reportlab`, then run:
-
-```bash
-python3 scripts/create_submission_pdf.py --live https://YOUR-PROJECT.vercel.app
-```
-
-This writes `output/pdf/mailsignal-submission.pdf`. Python and ReportLab are only for this optional document utility; the web application uses Node.js alone.
-
-## Project layout
+## Structure
 
 ```text
-public/          Browser interface and styles
-api/             Vercel HTTP endpoints
-app/server.mjs   Local HTTP server
-app/src/         Shared checking engine, HTTP utilities, optional SMTP adapter
-app/test/        Deterministic tests with injected DNS/SMTP fixtures
-scripts/         Build checks and printable submission generator
-docs/            SMTP design and interview preparation
+public/          Browser UI, styles, CSV utility
+app/server.mjs   Node web server used locally and on Render
+app/src/         Shared checking engine, HTTP/runtime adapters, optional SMTP
+api/             Vercel serverless entry points
+app/test/        Deterministic tests, including Render HTTPS-proxy regressions
+scripts/         Build checks, live deployment verification, submission utilities
+docs/            Deployment, SMTP, and interview guides
 ```
 
-The routing rules follow [RFC 5321 §5.1](https://www.rfc-editor.org/rfc/rfc5321#section-5.1) and [RFC 7505](https://www.rfc-editor.org/rfc/rfc7505). DNS requests use [Cloudflare's JSON DoH endpoint](https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/dns-json/).
+Routing rules: [RFC 5321 section 5.1](https://www.rfc-editor.org/rfc/rfc5321#section-5.1), [RFC 7505](https://www.rfc-editor.org/rfc/rfc7505). Resolver format: [Cloudflare JSON DoH documentation](https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/dns-json/).

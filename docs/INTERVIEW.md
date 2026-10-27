@@ -6,9 +6,9 @@ Understand and run the project yourself before presenting it. Describe the parts
 
 1. **Introduce the problem (15 seconds).** “MailSignal checks a pasted address list and explains which addresses are likely to bounce, which have a positive SMTP signal, and which cannot be verified.”
 2. **Run the simulated demo (30 seconds).** Show the three outcomes and the simulation label. Expand a row's evidence, filter by status, search for a domain, and export a CSV. Explain that fixtures make the presentation repeatable without contacting anyone's mailbox.
-3. **Run a real DNS check (30 seconds).** Use an address you own and an obviously malformed input. Explain why a working mail route returns unknown on Vercel. A DNS record describes a domain's routing, not the existence of a particular user.
+3. **Run a real DNS check (30 seconds).** Use an address you own and an obviously malformed input. Explain why a working mail route returns unknown on Render Free or Vercel. A DNS record describes a domain's routing, not the existence of a particular user.
 4. **Explain one implementation choice (30 seconds).** Show how a temporary DNS failure becomes unknown, while an authoritative NXDOMAIN or Null MX becomes bounce. Point to a deterministic test that demonstrates the distinction.
-5. **Close with the deployment constraint (15 seconds).** Vercel blocks outbound port 25, so the hosted version stays DNS-only. Optional local SMTP checks are restricted to exact owned addresses and stop before any message body is sent.
+5. **Close with the deployment constraint (15 seconds).** Render Free and Vercel block outbound port 25, so the hosted version stays DNS-only. Optional local SMTP checks are restricted to exact owned addresses and stop before any message body is sent.
 
 ## Engineering decisions worth discussing
 

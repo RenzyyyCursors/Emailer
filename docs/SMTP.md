@@ -1,8 +1,8 @@
 # Optional local SMTP checks
 
-The default local application and Vercel deployment check address syntax and DNS mail routing. A working mail domain alone cannot confirm that an individual mailbox exists. The optional Node.js SMTP adapter adds an envelope-only check when you run the application locally and your network permits outbound TCP port 25.
+The default local application and hosted Render/Vercel deployments check address syntax and DNS mail routing. A working mail domain alone cannot confirm that an individual mailbox exists. The optional Node.js SMTP adapter adds an envelope-only check when you run the application locally and your network permits outbound TCP port 25.
 
-The adapter is in `app/src/smtp.js`. Raw outbound SMTP is deliberately disabled in the Vercel serverless API; that deployment reports mailbox existence as **unknown** after successful DNS checks. A local SMTP network block, timeout, privacy response, anti-spam policy, or temporary failure also returns **unknown**.
+The adapter is in `app/src/smtp.js`. SMTP is deliberately disabled when the `RENDER` or `VERCEL` hosting environment is detected; those deployments report mailbox existence as **unknown** after successful DNS checks. A local SMTP network block, timeout, privacy response, anti-spam policy, or temporary failure also returns **unknown**.
 
 ## Ownership requirement
 

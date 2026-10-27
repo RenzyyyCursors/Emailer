@@ -330,7 +330,7 @@ function openInfo(privacy = false) {
         "Likely bounce means there is specific negative evidence: invalid syntax, a nonexistent domain, Null MX, no usable mail route, or a definitive mailbox-not-found reply in local SMTP mode.",
         "Unknown is a useful result. Working DNS proves mail routing, not that a mailbox exists. DNS errors, timeouts, policy blocks, catch-all uncertainty, and unsupported address formats cannot establish a bounce.",
         "Likely delivered requires a mail server to accept the recipient during the optional local check. Even acceptance does not guarantee final delivery; catch-all behavior is not tested.",
-        "The Vercel deployment uses DNS only because outbound SMTP port 25 is blocked. It intentionally returns Unknown for well-routed addresses. The simulated demo shows fictional examples of all three outcomes.",
+        "On Render Free and Vercel, this app uses DNS only. Mailbox SMTP checks are disabled, so well-routed addresses remain Unknown. The simulated demo shows fictional examples of all three outcomes.",
       ];
   for (const text of paragraphs) content.append(element("p", "", text));
   $("info-dialog").showModal();
@@ -351,9 +351,11 @@ fetch("/api/health", { signal: AbortSignal.timeout(5000) })
     $("mode-label").textContent = health.smtpEnabled
       ? "Local SMTP · owned only"
       : "DNS verification";
-    $("footer-mode").textContent = health.smtpEnabled
-      ? "Owned addresses only"
-      : "No mailbox probing";
+    if (metadata.mode !== "demo") {
+      $("footer-mode").textContent = health.smtpEnabled
+        ? "Owned addresses only"
+        : "No mailbox probing";
+    }
   })
   .catch(() => {
     $("mode-label").textContent = "API not connected";

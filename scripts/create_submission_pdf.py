@@ -13,7 +13,7 @@ from reportlab.platypus import Paragraph
 
 
 parser = ArgumentParser(description="Create a one-page MailSignal submission PDF.")
-parser.add_argument("--live", default="", help="Public HTTPS Vercel URL")
+parser.add_argument("--live", default="", help="Public HTTPS Render or Vercel URL")
 parser.add_argument("--repo", default="https://github.com/RenzyyyCursors/Emailer")
 args = parser.parse_args()
 for value in [args.live, args.repo]:
@@ -63,14 +63,14 @@ c.rect(0, height - 12, width, 12, fill=1, stroke=0)
 text(50, height - 58, "SHIELDNIX  /  SOFTWARE DEVELOPMENT INTERNSHIP", 9, muted, "Helvetica-Bold")
 text(48, height - 121, "MailSignal.", 49, green, "Helvetica-Bold")
 paragraph("Evidence-based email verification.<br/>Clear results. Honest uncertainty. No messages sent.", 50, height - 143, 470, 12, 19)
-box(50, 625, 285, 28, light, light, 7)
-text(63, 635, "NODE.JS   /   DNS OVER HTTPS   /   VERCEL", 9, green, "Helvetica-Bold")
+box(50, 625, 360, 28, light, light, 7)
+text(63, 635, "NODE.JS   /   DNS OVER HTTPS   /   RENDER OR VERCEL", 9, green, "Helvetica-Bold")
 
 banner_color = colors.HexColor("#f9f3e5") if not args.live else light
 box(50, 560, width - 100, 48, banner_color, banner_color, 7)
 text(64, 588, "LINKS READY" if args.live else "TEMPLATE - DEPLOYMENT PENDING", 9,
      green if args.live else colors.HexColor("#96732f"), "Helvetica-Bold")
-text(64, 573, "Check both links before submitting." if args.live else "Add the live Vercel URL after deploying. Do not submit this template.", 9,
+text(64, 573, "Check both links before submitting." if args.live else "Add the live Render or Vercel URL after deploying. Do not submit this template.", 9,
      green if args.live else colors.HexColor("#96732f"))
 
 box(50, 460, width - 100, 82)
@@ -79,7 +79,7 @@ if args.live:
     paragraph(escape(args.live), 66, 503, width - 132, 11, 15, green)
     c.linkURL(args.live, (65, 476, width - 65, 507), relative=0, thickness=0)
 else:
-    c.acroForm.textfield(name="live_url", tooltip="Paste your public Vercel URL after deployment",
+    c.acroForm.textfield(name="live_url", tooltip="Paste your public Render or Vercel URL after deployment",
                         x=65, y=480, width=width - 130, height=26, borderWidth=0.6,
                         borderColor=line, fillColor=light, textColor=green,
                         fontName="Helvetica", fontSize=10, value="", fieldFlags="")
@@ -105,11 +105,11 @@ for index, (label, detail, color) in enumerate([
     text(x + 11, 229, detail, 8, muted)
 
 text(50, 185, "HOSTING LIMITATION", 9, muted, "Helvetica-Bold")
-paragraph("The Vercel version checks syntax and DNS mail routing. Outbound SMTP port 25 is blocked, so healthy routing stays <b>unknown</b>; DNS cannot prove a mailbox exists. Optional local SMTP checks are restricted to owned addresses and stop before DATA. Acceptance never guarantees delivery.", 50, 171, width - 100, 10, 16)
+paragraph("The hosted version checks syntax and DNS mail routing. Render Free and Vercel block SMTP port 25, so healthy routing stays <b>unknown</b>; DNS cannot prove a mailbox exists. Optional local SMTP checks are restricted to owned addresses and stop before DATA. Acceptance never guarantees delivery.", 50, 171, width - 100, 10, 16)
 
 c.setStrokeColor(line)
 c.line(50, 77, width - 50, 77)
-paragraph("The README includes local setup, Vercel deployment steps, tests, privacy details, and verification limits.", 50, 64, width - 100, 8.5, 12)
+paragraph("The README includes local setup, Render/Vercel deployment steps, tests, privacy details, and verification limits.", 50, 64, width - 100, 8.5, 12)
 c.showPage()
 c.save()
 print(path)
