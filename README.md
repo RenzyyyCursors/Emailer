@@ -4,7 +4,7 @@ Email verification for the Shieldnix software development internship assignment.
 
 **Repository:** [RenzyyyCursors/Emailer](https://github.com/RenzyyyCursors/Emailer)
 
-**Live application:** [Add your public Render or Vercel URL here after deployment.](https://emailer-2t73.onrender.com/)
+**Live application:** [https://emailer-2t73.onrender.com/](https://emailer-2t73.onrender.com/)
 
 ![MailSignal interface](docs/screenshot.png)
 
