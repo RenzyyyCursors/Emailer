@@ -97,7 +97,7 @@ export function createDnsResolver({ fetchImpl = globalThis.fetch, timeoutMs = 40
         }, Math.max(1, Number(timeoutMs) || 4000));
       });
       const request = (async () => {
-        const response = await fetchImpl(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=${encodeURIComponent(type)}`, {
+        const response = await fetchImpl(`https://1.1.1.1/dns-query?name=${encodeURIComponent(domain)}&type=${encodeURIComponent(type)}`, {
           headers: { Accept: 'application/dns-json' },
           signal: controller.signal,
         });
@@ -249,7 +249,7 @@ export async function checkBatch(addresses, { resolveDns = createDnsResolver(), 
       const probe = await probeMailbox({ email, normalized, domain, mx: result.mx.map((record) => ({ ...record })) });
       if (probe?.status === 'accepted') {
         result.checks.mailbox = 'pass';
-        return finish('delivered', 'recipient_accepted', 'The mail server accepted the recipient check. Acceptance does not guarantee final delivery.');
+        return finish('delivered', 'recipient_accepted', 'The mail server accepted the recipient check. Acceptance does not guarantee final delivery; catch-all behavior is untested.');
       }
       if (probe?.status === 'rejected' && probe.definitive === true) {
         result.checks.mailbox = 'fail';

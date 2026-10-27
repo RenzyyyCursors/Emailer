@@ -4,6 +4,8 @@ A small email deliverability checker built for an internship assignment. Paste u
 
 **Stack:** vanilla HTML/CSS/JavaScript, Node.js 22.9+, and Vercel Functions. No runtime dependencies, database, paid API, or API keys are required.
 
+![MailSignal interface showing actual DNS checks](docs/screenshot.png)
+
 ## Run locally
 
 ```bash
@@ -34,7 +36,7 @@ The **simulated demo** uses reserved `.test` addresses and fixed fixtures to dem
 ## How it works
 
 1. Parse addresses separated by newlines, commas, semicolons, or whitespace. Validate a supported email syntax subset; preserve local-part case and normalize the domain, including IDNA domains. Plausible quoted local parts, SMTPUTF8 local parts, and address literals return unknown rather than being silently rejected as invalid.
-2. Ask Cloudflare DNS over HTTPS for MX records. Handle an explicit Null MX (`0 .`) as no email service. If no MX exists, check A/AAAA records for the SMTP implicit-MX fallback.
+2. Ask Cloudflare DNS over HTTPS (`https://1.1.1.1/dns-query`) for MX records. The HTTPS endpoint uses a fixed IP to avoid a bootstrap DNS lookup, with normal TLS certificate validation. Handle an explicit Null MX (`0 .`) as no email service. If no MX exists, check A/AAAA records for the SMTP implicit-MX fallback.
 3. Resolve advertised mail-server addresses. A temporary lookup failure remains unknown; it is never turned into NXDOMAIN or a bounce.
 4. Return the evidence. By default, a working DNS route still produces **unknown** because DNS cannot prove that an individual mailbox exists.
 
@@ -83,6 +85,14 @@ npm run submission -- --live https://YOUR-PROJECT.vercel.app --repo https://gith
 ```
 
 Open the generated `submission.html` and use **Print → Save as PDF**. A starter PDF is also available at [`output/pdf/mailsignal-submission-template.pdf`](output/pdf/mailsignal-submission-template.pdf), with the deployment marked as pending. Replace it with the completed version before submitting. The live link must point to a real deployment; the repository does not pretend that one already exists. See [the interview guide](docs/INTERVIEW.md) for a short demo and engineering discussion points.
+
+The template PDF includes an editable field for the live link. To generate a finished PDF directly instead, install the optional document dependency with `python3 -m pip install reportlab`, then run:
+
+```bash
+python3 scripts/create_submission_pdf.py --live https://YOUR-PROJECT.vercel.app
+```
+
+This writes `output/pdf/mailsignal-submission.pdf`. Python and ReportLab are only for this optional document utility; the web application uses Node.js alone.
 
 ## Project layout
 

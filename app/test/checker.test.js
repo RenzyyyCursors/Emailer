@@ -231,7 +231,7 @@ test('DNS-over-HTTPS requests JSON and passes the requested type and hostname', 
     return { ok: true, json: async () => ({ Status: 0 }) };
   } });
   assert.deepEqual(await resolveDns('xn--bcher-kva.de', 'MX'), ok());
-  assert.equal(request.url.hostname, 'cloudflare-dns.com');
+  assert.equal(request.url.hostname, '1.1.1.1');
   assert.equal(request.url.searchParams.get('name'), 'xn--bcher-kva.de');
   assert.equal(request.url.searchParams.get('type'), 'MX');
   assert.equal(request.options.headers.Accept, 'application/dns-json');

@@ -227,6 +227,60 @@ test('malformed DNS payloads and resolver errors remain unknown through the HTTP
   }
 });
 
+test('batch deadline returns unknown for hanging DNS and quickly drains queued rows', { timeout: 1000 }, async () => {
+  let dnsCalls = 0;
+  const handler = offlineApi({
+    requestTimeoutMs: 10,
+    resolveDns: () => {
+      dnsCalls += 1;
+      return new Promise(() => {});
+    },
+  });
+  const addresses = Array.from({ length: MAX_ADDRESSES }, (_, index) => `person@routing-${index}.test`);
+  const started = performance.now();
+  const response = await handler(request('/api/check', { body: { text: addresses.join('\n') } }));
+  const data = await response.json();
+  assert.equal(response.status, 200);
+  assert.ok(performance.now() - started < 900);
+  assert.equal(data.results.length, MAX_ADDRESSES);
+  assert.deepEqual(data.results.map((row) => row.email), addresses);
+  assert.equal(dnsCalls, 8, 'Only the active DNS work should start; queued rows inherit the expired batch deadline.');
+  for (const row of data.results) {
+    assert.equal(row.status, 'unknown');
+    assert.equal(row.code, 'dns_unavailable');
+    assert.equal(row.checks.syntax, 'pass');
+    assert.equal(row.checks.domain, 'unknown');
+  }
+});
+
+test('batch deadline returns unknown for hanging mailbox probes and quickly drains queued rows', { timeout: 1000 }, async () => {
+  let probeCalls = 0;
+  const handler = offlineApi({
+    requestTimeoutMs: 10,
+    resolveDns: healthyDns,
+    probeMailbox: () => {
+      probeCalls += 1;
+      return new Promise(() => {});
+    },
+  });
+  const addresses = Array.from({ length: MAX_ADDRESSES }, (_, index) => `person-${index}@routing.test`);
+  const started = performance.now();
+  const response = await handler(request('/api/check', { body: { text: addresses.join('\n') } }));
+  const data = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(data.mode, 'local-smtp');
+  assert.ok(performance.now() - started < 900);
+  assert.equal(data.results.length, MAX_ADDRESSES);
+  assert.deepEqual(data.results.map((row) => row.email), addresses);
+  assert.equal(probeCalls, 8, 'Only active probes should start; queued rows must not begin after the deadline.');
+  for (const row of data.results) {
+    assert.equal(row.status, 'unknown');
+    assert.equal(row.code, 'mailbox_unverified');
+    assert.match(row.reason, /batch reached its time limit/);
+    assert.deepEqual(row.checks, { syntax: 'pass', domain: 'pass', mail: 'pass', mailbox: 'unknown' });
+  }
+});
+
 test('Vercel route entrypoints all export the shared handler', async () => {
   for (const name of ['check', 'demo', 'health']) {
     const route = await import(`../../api/${name}.js`);
@@ -241,7 +295,7 @@ test('Vercel remains DNS-only when local SMTP environment variables are present'
   process.env.SMTP_OWNED_EMAILS = 'owned@routing.test';
   globalThis.fetch = async (url) => {
     const query = new URL(url);
-    assert.equal(query.origin, 'https://cloudflare-dns.com');
+    assert.equal(query.origin, 'https://1.1.1.1');
     dnsCalls += 1;
     return Response.json(await healthyDns(query.searchParams.get('name'), query.searchParams.get('type')));
   };
